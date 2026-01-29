@@ -8,9 +8,10 @@ Antes de executar:
 
 Como funciona?
 - Ao executar a aplicação é aberta uma janela solicitando o caminho da planilha que contém as informações dos usuários. Ao selecionar a planilha a automatização já se inicia.
-- A aplicação usa como base para verificar os usuário uma coluna "Status" na planilha, se o status for "C" o usuário é ignorado, caso contrário será verificado se o usuário já existe e se está atribuídos nos devidos cursos que foram solicitados.
-- Se o usuário já existir e estiver atribuído em todos os cursos solicitados, define o status como "C" e segue para o próximo usuário.
-- Se o usuário já existir mas não estiver em algum ou nenhum curso escolhido, ele será atribuído no(s) curso(s) em questão, define o status como "C" e seguirá para o próximo usuário.
-- Se o usuário não existir, ele será criado e atribuídos nos cursos escolhidos, define o status como "C" e segue para o próximo usuário.
+- A aplicação usa como base para verificar os usuário uma coluna "Status" na planilha, se o status for "Ok" ou "N Ok" o usuário é ignorado, caso contrário será verificado se o usuário já existe e se está atribuído nos devidos cursos que foram solicitados.
+- Se o usuário já existir e estiver atribuído em todos os cursos solicitados, define o status como "Ok", envia o email com informativo do acesso e segue para o próximo usuário.
+- Se o usuário já existir mas não estiver em algum ou nenhum curso escolhido, ele será atribuído no(s) curso(s) em questão, envia o email com informativo do acesso e define o status como "Ok" e seguirá para o próximo usuário.
+- Se o usuário não existir, ele será criado e atribuídos nos cursos escolhidos, envia o email com informativo do acesso, define o status como "Ok" e segue para o próximo usuário.
+- No caso de qualquer erro durante o processo é atribuído o status como "N Ok" e segue para o próximo usuário.
 
-Atualizações com melhorias virão.
+Projeto em andamento.
