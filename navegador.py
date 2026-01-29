@@ -49,15 +49,15 @@ def login(nav, espera, usuario, senha):
         nav.find_element("id", "input_username-login").send_keys(usuario)
         nav.find_element("id", "input_password-login").send_keys(senha)
         nav.find_element("id", "btn_enter-login").click()
+        logger.info("Login realizado com sucesso")
 
         # Acessa perfil de supervisor
         logger.info("Acessando perfil de supervisor")
-        time.sleep(3)
+        time.sleep(5)
         troca_perfil = espera.until(ec.presence_of_element_located(("id", "btn_changeprofile")))
         troca_perfil.click()
         supervisor = espera.until(ec.presence_of_element_located(("id", "menu_perfil_SUP")))
         supervisor.click()
         logger.info("Perfil de supervisor acessado com sucesso")
-        logger.info("Login realizado com sucesso")
     except Exception as e:
         logger.error(f"Erro no login na UCS: {e}")

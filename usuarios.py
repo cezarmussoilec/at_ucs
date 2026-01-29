@@ -100,6 +100,8 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_pad, caminho):
                 logger.info(f"Usuário {nome} ({login_cpf}) já existe")
                 hist = espera.until(ec.presence_of_element_located(("id", f"btn_history-login={login_cpf}")))
                 hist.click()
+                logger.info("Verificando cursos já atribuídos ao usuário")
+                logger.info("Aguardando carregamento dos elementos da página")
                 time.sleep(45)
 
                 # Busca cursos já atribuídos
@@ -121,7 +123,7 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_pad, caminho):
 
             else:
                 # Adiciona Usuário
-                logger.info(f"Usuário {login_cpf} não encontrado")
+                logger.info(f"Usuário {nome} ({login_cpf}) não encontrado")
                 logger.info("Iniciando criação do usuário")
                 nav.find_element("id", "btn_toggle_dropdown_menu_module-users").click()
                 nav.find_element("id", "menu_item_link-users-user").click()
@@ -132,7 +134,7 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_pad, caminho):
                 cursos_faltantes = lista_cursos
                 insere_cursos(nav, espera, nome, login_cpf, cursos_faltantes)
 
-            # Atualiza planilha
+            # Envia email com informativo e atualiza planilha
             envia_email(nome, email, login_cpf, senha_pad)
             df.at[usuario.name, "Status"] = "Ok"
             df.to_excel(caminho, index=False)

@@ -4,9 +4,10 @@ from utils import get_logger
 
 logger = get_logger()
 
+# Envia email de informativo para o usuário
 def envia_email(nome, email, login_cpf, senha_pad):
     try:
-        logger.info("Iniciando processo de envio de email")
+        logger.info(f"Iniciando processo de envio de email para {nome} ({email})")
         outlook = client.Dispatch("Outlook.Application")
         message = outlook.CreateItem(0)
         dir_base = pathlib.Path.home() / "Pictures"

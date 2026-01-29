@@ -5,28 +5,32 @@ logger = get_logger()
 
 # Chama as funções para inserir em cada curso
 def insere_cursos(nav, espera, nome, login_cpf, cursos_faltantes):
-    curso_otimizacao_yms = False
+    try:
+        curso_otimizacao_yms = False
 
-    for curso in cursos_faltantes:
-        if curso == "Gestão de Pessoas | HCM":
-            acessa_catalogo(nav, espera)
-            gestao_pessoas(nav, nome, login_cpf)
-        elif curso == "Otimização Logística":
-            if not curso_otimizacao_yms:
+        for curso in cursos_faltantes:
+            if curso == "Gestão de Pessoas | HCM":
                 acessa_catalogo(nav, espera)
-                otimizacao_yms(nav, nome, login_cpf)
-                curso_otimizacao_yms = True
-        elif curso == "Gestão de Armazenagem | WMS Senior":
-            acessa_catalogo(nav, espera)
-            gestao_wms(nav, nome, login_cpf)
-        elif curso == "Gestão de Mão de Obra no Armazém":
-            acessa_catalogo(nav, espera)
-            gestao_obra(nav, nome, login_cpf)
-        elif curso == "Gestão Empresarial | ERP XT - Geral":
-            acessa_catalogo(nav, espera)
-            gestao_erp(nav, nome, login_cpf)
-        else:
-            return False
+                gestao_pessoas(nav, nome, login_cpf, curso)
+            elif curso == "Otimização Logística":
+                if not curso_otimizacao_yms:
+                    acessa_catalogo(nav, espera)
+                    otimizacao_yms(nav, nome, login_cpf, curso)
+                    curso_otimizacao_yms = True
+            elif curso == "Gestão de Armazenagem | WMS Senior":
+                acessa_catalogo(nav, espera)
+                gestao_wms(nav, nome, login_cpf, curso)
+            elif curso == "Gestão de Mão de Obra no Armazém":
+                acessa_catalogo(nav, espera)
+                gestao_obra(nav, nome, login_cpf, curso)
+            elif curso == "Gestão Empresarial | ERP XT - Geral":
+                acessa_catalogo(nav, espera)
+                gestao_erp(nav, nome, login_cpf, curso)
+            else:
+                return False
+    except Exception as e:
+        logger.error(f"Erro ao inserir o usuário {nome} no curso {curso}: {e}")
+        raise
 
 # Acessa catálogo de cursos
 def acessa_catalogo(nav, espera):
@@ -39,37 +43,43 @@ def acessa_catalogo(nav, espera):
         nossas_solucoes = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[2]/button')))
         nossas_solucoes.click()
         time.sleep(1)
+        logger.info("Catálogo acessado com sucesso")
     except Exception as e:
-        logger.error("Erro ao acessar o catálogo: {e}", exc_info=True)
+        logger.error(f"Erro ao acessar o catálogo: {e}", exc_info=True)
 
 # Associa o usuário ao curso em questão
 def associa_cursos(nav, login_cpf):
-    espera = WebDriverWait(nav, 10)
-    time.sleep(5)
-    associar_usuario = espera.until(ec.presence_of_element_located((By.XPATH,
-        '//*[@id="konviva_content_root"]/div/div[4]/div/div/div/div/div/div/div[2]/div[3]/div[1]/a')))
-    associar_usuario.click()
-    busca_usuario = espera.until(ec.presence_of_element_located(("id", "input_search_field")))
-    busca_usuario.send_keys(login_cpf)
-    buscar = espera.until(ec.presence_of_element_located(("id", "btn_search_field")))
-    buscar.click()
-    time.sleep(2)
-    check = espera.until(ec.presence_of_element_located(("id", "checkboxID_0")))
-    check.click()
-    associar = espera.until(ec.presence_of_element_located((By.XPATH,
-        '//*[@id="konviva_content_root"]/div/div[4]/div/div[2]/div/div/div/div/div/div/div/div[3]/div/button')))
-    associar.click()
-    # Confirma
-    botao_confirmar = espera.until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Confirmar')]")))
-    botao_confirmar.click()
-    time.sleep(1)
-    nav.refresh()
-    time.sleep(3)
+    try:
+        logger.info("Associando usuário ao curso")
+        espera = WebDriverWait(nav, 10)
+        time.sleep(5)
+        associar_usuario = espera.until(ec.presence_of_element_located((By.XPATH,
+            '//*[@id="konviva_content_root"]/div/div[4]/div/div/div/div/div/div/div/div/div[2]/div[4]/div[1]/a')))
+        associar_usuario.click()
+        busca_usuario = espera.until(ec.presence_of_element_located(("id", "input_search_field")))
+        busca_usuario.send_keys(login_cpf)
+        buscar = espera.until(ec.presence_of_element_located(("id", "btn_search_field")))
+        buscar.click()
+        time.sleep(2)
+        check = espera.until(ec.presence_of_element_located(("id", "checkboxID_0")))
+        check.click()
+        associar = espera.until(ec.presence_of_element_located((By.XPATH,
+            '//*[@id="konviva_content_root"]/div/div[4]/div/div[2]/div/div/div/div/div/div/div/div[3]/div/button')))
+        associar.click()
+        # Confirma
+        botao_confirmar = espera.until(ec.presence_of_element_located((By.XPATH, "//button[contains(text(), 'Confirmar')]")))
+        botao_confirmar.click()
+        time.sleep(1)
+        nav.refresh()
+        time.sleep(3)
+    except Exception as e:
+        logger.error(f"Erro ao associar o usuário: {e}", exc_info=True)
+        raise
 
 # Curso: Gestão de Pessoas | HCM
-def gestao_pessoas(nav, nome, login_cpf):
+def gestao_pessoas(nav, nome, login_cpf, curso):
     try:
-        logger.info("Acessando o curso Gestão de Pessoas | HCM")
+        logger.info(f"Acessando o curso {curso}")
         espera = WebDriverWait(nav, 10)
         hcm = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[2]/button')))
         hcm.click()
@@ -77,14 +87,15 @@ def gestao_pessoas(nav, nome, login_cpf):
         nav.execute_script("arguments[0].scrollIntoView({block: 'center'});", saiba_mais)
         saiba_mais.click()
         associa_cursos(nav, login_cpf)
-        logger.info(f"Usuário {nome} ({login_cpf}) associado com sucesso ao curso Gestão de Pessoas | HCM")
+        logger.info(f"Usuário {nome} ({login_cpf}) associado com sucesso ao curso {curso}")
     except Exception as e:
-        logger.error("Erro ao acessar o curso Gestão de Pessoas | HCM")
+        logger.error(f"Erro ao acessar o curso {curso}: {e}")
+        raise
 
 # Curso: Otimização Logística
-def otimizacao_yms(nav, nome, login_cpf):
+def otimizacao_yms(nav, nome, login_cpf, curso):
     try:
-        logger.info("Acessando o curso Otimização Logística")
+        logger.info(f"Acessando o curso {curso}")
         espera = WebDriverWait(nav, 10)
         log = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[7]/button')))
         log.click()
@@ -92,14 +103,15 @@ def otimizacao_yms(nav, nome, login_cpf):
         nav.execute_script("arguments[0].scrollIntoView({block: 'center'});", saiba_mais)
         saiba_mais.click()
         associa_cursos(nav, nome)
-        logger.info(f"Usuário {nome} ({login_cpf} associado com sucesso ao curso Otimização Logística")
+        logger.info(f"Usuário {nome} ({login_cpf}) associado com sucesso ao curso {curso}")
     except Exception as e:
-        logger.error("Erro ao acessoar o curso Otimização Logística")
+        logger.error(f"Erro ao acessar o curso {curso}: {e}")
+        raise
 
 # Curso: Gestão de Armazenagem | WMS Senior
-def gestao_wms(nav, nome, login_cpf):
+def gestao_wms(nav, nome, login_cpf, curso):
     try:
-        logger.info("Acessando o curso Gestão de Armazenagem | WMS Senior")
+        logger.info(f"Acessando o curso {curso}")
         espera = WebDriverWait(nav, 10)
         wms = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[7]/button')))
         wms.click()
@@ -107,14 +119,15 @@ def gestao_wms(nav, nome, login_cpf):
         nav.execute_script("arguments[0].scrollIntoView({block: 'center'});", saiba_mais)
         saiba_mais.click()
         associa_cursos(nav, nome)
-        logger.info(f"Usuário {nome} ({login_cpf} associado com sucesso ao curso Gestão de Armazenagem | WMS Senior")
+        logger.info(f"Usuário {nome} ({login_cpf}) associado com sucesso ao curso {curso}")
     except Exception as e:
-        logger.error("Erro ao acessar o curso Gestão de Armazenagem | WMS Senior")
+        logger.error(f"Erro ao acessar o curso {curso}: {e}")
+        raise
 
 # Curso: Gestão de Mão de Obra no Armazém
-def gestao_obra(nav, nome, login_cpf):
+def gestao_obra(nav, nome, login_cpf, curso):
     try:
-        logger.info("Acessando o curso Gestão de Mão de Obra no Armazém")
+        logger.info(f"Acessando o curso {curso}")
         espera = WebDriverWait(nav, 10)
         obra = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[7]/button')))
         obra.click()
@@ -122,14 +135,15 @@ def gestao_obra(nav, nome, login_cpf):
         nav.execute_script("arguments[0].scrollIntoView({block: 'center'});", saiba_mais)
         saiba_mais.click()
         associa_cursos(nav, nome)
-        logger.info(f"Usuário {nome} ({login_cpf} associado com sucesso ao curso Gestão de Mão de Obra no Armazém")
+        logger.info(f"Usuário {nome} ({login_cpf}) associado com sucesso ao curso {curso}")
     except Exception as e:
-        logger.error("Erro ao acessar o curso Gestão de Mão de Obra no Armazém")
+        logger.error(f"Erro ao acessar o curso {curso}: {e}")
+        raise
 
 # Curso: Gestão Empresarial | ERP XT - Geral
-def gestao_erp(nav, nome, login_cpf):
+def gestao_erp(nav, nome, login_cpf, curso):
     try:
-        logger.info("Acessando o curso Gestão Empresarial | ERP XT - Geral")
+        logger.info(f"Acessando o curso {curso}")
         espera = WebDriverWait(nav, 10)
         erp = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[3]/button')))
         erp.click()
@@ -137,6 +151,7 @@ def gestao_erp(nav, nome, login_cpf):
         nav.execute_script("arguments[0].scrollIntoView({block: 'center'});", saiba_mais)
         saiba_mais.click()
         associa_cursos(nav, nome)
-        logger.info(f"Usuário {nome} ({login_cpf} associado com sucesso ao curso Gestão Empresarial | ERP XT - Geral")
+        logger.info(f"Usuário {nome} ({login_cpf}) associado com sucesso ao curso {curso}")
     except Exception as e:
-        logger.error("Erro ao acessar o curso Gestão Empresarial | ERP XT - Geral")
+        logger.error(f"Erro ao acessar o curso {curso}: {e}")
+        raise

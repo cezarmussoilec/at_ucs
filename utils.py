@@ -36,7 +36,8 @@ def get_logger():
 
     # Evita duplicar handlers
     if not logger.handlers:
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                                      datefmt="%Y-%m-%d %H:%M:%S")
 
         # Handler para arquivo
         file_handler = logging.FileHandler(caminho_arquivo, encoding="utf-8")
