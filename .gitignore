@@ -1,0 +1,34 @@
+# --- Python ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# --- Logs ---
+logs/
+*.log
+
+# --- Arquivos temporários ---
+*.tmp
+*.swp
+
+# --- Ambientes virtuais ---
+venv/
+.env/
+
+# --- Arquivos de configuração locais ---
+*.sqlite3
+.DS_Store
+Thumbs.db
+
+# --- IDEs ---
+.vscode/
+.idea/
+
+# --- Arquivos Excel usados como entrada ---
+*.xlsx
+*.xls
+
+# --- Arquivos de backup ---
+*.bak
+*.old
