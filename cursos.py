@@ -26,7 +26,7 @@ def insere_cursos(nav, espera, nome, login_cpf, cursos_faltantes):
             elif curso == "Gestão de Mão de Obra no Armazém":
                 acessa_catalogo(nav, espera)
                 gestao_obra(nav, nome, login_cpf, curso)
-            elif curso == "Gestão Empresarial | ERP XT - Geral":
+            elif curso == "Gestão Empresarial | ERP XT - Trilha":
                 acessa_catalogo(nav, espera)
                 gestao_erp(nav, nome, login_cpf, curso)
             elif curso == "ERP XT Cadastros Iniciais":
@@ -60,9 +60,10 @@ def insere_cursos(nav, espera, nome, login_cpf, cursos_faltantes):
                 acessa_catalogo(nav, espera)
                 erp_controladoria(nav, nome, login_cpf, curso)
             else:
-                return False
+                raise ValueError(f"Curso sem regra de automacao: {curso}")
     except Exception as e:
         logger.error(f"Erro ao inserir o usuário {nome} no curso {curso}: {e}")
+        raise
 
 # Acessa catálogo de cursos
 def acessa_catalogo(nav, espera):
@@ -78,6 +79,7 @@ def acessa_catalogo(nav, espera):
         logger.info("Catálogo acessado com sucesso")
     except Exception as e:
         logger.error(f"Erro ao acessar o catálogo: {e}", exc_info=True)
+        raise
 
 # Curso: Gestão de Pessoas | HCM
 def gestao_pessoas(nav, nome, login_cpf, curso):
@@ -143,14 +145,14 @@ def gestao_obra(nav, nome, login_cpf, curso):
         logger.error(f"Erro ao acessar o curso {curso}: {e}")
         raise
 
-# Curso: Gestão Empresarial | ERP XT - Geral
+# Curso: Gestão Empresarial | ERP XT - Trilha
 def gestao_erp(nav, nome, login_cpf, curso):
     try:
         logger.info(f"Acessando o curso {curso}")
         espera = WebDriverWait(nav, 10)
         erp = espera.until(ec.presence_of_element_located((By.XPATH, '//*[@id="categories_list-catalog"]/li[2]/button')))
         erp.click()
-        saiba_mais = espera.until(ec.presence_of_element_located(("id", "btn-sm-Gestão Empresarial | ERP XT - Geral")))
+        saiba_mais = espera.until(ec.presence_of_element_located(("id", "btn-sm-Gestão Empresarial | ERP XT - Trilha")))
         nav.execute_script("arguments[0].scrollIntoView({block: 'center'});", saiba_mais)
         saiba_mais.click()
         associa_cursos(nav, login_cpf)

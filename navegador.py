@@ -1,5 +1,7 @@
+import os
 import time
 from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as ec
@@ -7,18 +9,37 @@ from utils import get_logger
 
 logger = get_logger()
 
+def env_bool(nome, padrao=False):
+    valor = os.getenv(nome)
+    if valor is None:
+        return padrao
+
+    return valor.strip().lower() in ("1", "true", "sim", "s", "yes", "y")
+
 # Instancia do navegador (Chrome)
 def navegador():
     try:
         logger.info("Abrindo navegador")
-        nav = webdriver.Chrome()
+        headless = env_bool("HEADLESS_BROWSER", False)
+        options = Options()
+
+        if headless:
+            logger.info("Modo headless ativado para o Chrome")
+            options.add_argument("--headless=new")
+            options.add_argument("--window-size=1920,1080")
+            options.add_argument("--disable-gpu")
+            options.add_argument("--disable-dev-shm-usage")
+
+        nav = webdriver.Chrome(options=options)
         nav.get("https://ucsonline.senior.com.br/lms/index.html#/home")
-        nav.maximize_window()
+        if not headless:
+            nav.maximize_window()
         espera = WebDriverWait(nav, timeout=10)
         logger.info("Navegador aberto com sucesso")
         return nav, espera
     except Exception as e:
         logger.error(f"Erro na abertura do navegador: {e}")
+        raise
 
 # Fecha o navegador após o processamento
 def fecha_nav(nav):

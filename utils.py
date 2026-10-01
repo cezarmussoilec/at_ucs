@@ -6,6 +6,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+LOG_FILE_PATH = None
+
 def is_url(value):
     parsed = urlparse(value)
     return parsed.scheme in ("http", "https") and bool(parsed.netloc)
@@ -51,14 +53,17 @@ def caminho_relativo(nome_arquivo: str) -> str:
     return os.path.join(pasta_base, nome_arquivo)
 
 def get_logger():
+    global LOG_FILE_PATH
     # Cria pasta "logs" caso não existir
     logs_dir = os.path.join(os.path.dirname(__file__), "logs")
-    os.makedirs("logs", exist_ok=True)
+    os.makedirs(logs_dir, exist_ok=True)
 
     # Gera nome do arquivo com data e hora da execução
     data_atual = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
     nome_arquivo = f"AT_UCS_{data_atual}.log"
     caminho_arquivo = os.path.join(logs_dir, nome_arquivo)
+    if LOG_FILE_PATH is None:
+        LOG_FILE_PATH = caminho_arquivo
 
     logger = logging.getLogger("automacao_ucs")
     logger.setLevel(logging.INFO)
@@ -82,3 +87,6 @@ def get_logger():
         logger.addHandler(console_handler)
 
     return logger
+
+def get_log_file_path():
+    return LOG_FILE_PATH

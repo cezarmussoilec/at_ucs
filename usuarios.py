@@ -7,10 +7,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from cursos import insere_cursos
 from utils import formatar_nome, get_logger
-from informativo import envia_email
+from informativo import envia_email, envia_email_usuario_existente
 from dados import salva_planilha
 
 logger = get_logger()
+
+def env_bool(nome, padrao=True):
+    valor = os.getenv(nome)
+    if valor is None:
+        return padrao
+
+    return valor.strip().lower() in ("1", "true", "sim", "s", "yes", "y")
 
 CURSOS_ATRIBUIDOS_XPATH = (
     '//*[@id="konviva_content_root"]/div/div[4]/div[2]/div/div/section/div[2]/div/div/div/div[2]'
@@ -151,9 +158,15 @@ def form_usuario(nav, nome, login_cpf, senha_padrao, email):
         time.sleep(2)
     except Exception as e:
         logger.error(f"Erro na criação do usuário {nome} | {login_cpf} | {email}. Erro: {e}")
+        raise
 
 def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
     sheet_name = os.getenv("SHAREPOINT_SHEET", "Sheet1")
+    resumo = {
+        "total_pendentes": len(usuarios_pendentes),
+        "ok": [],
+        "n_ok": [],
+    }
     logger.info("Iniciando processamento dos usuários")
     for u, usuario in usuarios_pendentes.iterrows():
         # Busca os dados dos usuários
@@ -170,6 +183,11 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 continue
         login_cpf = "".join(ajuste_cpf)
         logger.info(f"Processando usuário: {nome} | CPF: {login_cpf} | Email: {email}")
+        usuario_resumo = {
+            "nome": nome,
+            "cpf": login_cpf,
+            "email": email,
+        }
 
         try:
             # Lista de outros cursos selecionados
@@ -188,7 +206,8 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 "Otimização | Logística": "Otimização Logística",
                 "Gestão de Pátio YMS | Logística": "Otimização Logística",
                 "Gestão de Armazenagem WMS | Logística": "Gestão de Armazenagem | WMS Senior",
-                "Gestão de Mão de Obra na Armazenagem | Logística": "Gestão de Mão de Obra no Armazém"
+                "Gestão de Mão de Obra na Armazenagem | Logística": "Gestão de Mão de Obra no Armazém",
+                "Gestão Empresarial | ERP - (NOVO)": "Gestão Empresarial | ERP XT - Trilha"
             }
             lista_outros_cursos = [equivalencia_outros_cursos.get(curso, curso) for curso in lista_outros_cursos]
 
@@ -203,11 +222,14 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 "Integrações": "ERP XT Integrações",
                 "Suprimentos": "ERP XT Suprimentos",
                 "Serviços": "ERP XT Serviços",
-                "Controladoria": "ERP XT Controladoria",
+                "Controladoria": "ERP XT Controladoria"
             }
             lista_cursos_erp = [equivalencia_cursos_erp.get(curso, curso) for curso in lista_cursos_erp]
             lista_cursos = list(dict.fromkeys(lista_outros_cursos + lista_cursos_erp))
             logger.info(f"Cursos finais para atribuição: {lista_cursos}")
+            usuario_resumo["cursos_solicitados"] = lista_cursos
+            usuario_resumo["cursos_ja_atribuidos"] = []
+            usuario_resumo["cursos_atribuidos_execucao"] = []
 
             # Verifica se o usuário já existe
             if usuario_existe(nav, espera, login_cpf):
@@ -221,12 +243,18 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 # Busca cursos já atribuídos
                 cursos_encontrados = cursos_atribuidos_usuario(nav, espera)
                 cursos_faltantes = [curso for curso in lista_cursos if curso not in cursos_encontrados]
+                usuario_resumo["cursos_ja_atribuidos"] = [
+                    curso for curso in lista_cursos if curso in cursos_encontrados
+                ]
                 logger.info(f"Cursos já atribuídos a {nome}: {cursos_encontrados}")
 
                 # Insere nos cursos faltantes
                 if cursos_faltantes:
                     logger.info(f"Cursos ainda necessários para {nome}: {cursos_faltantes}")
                     insere_cursos(nav, espera, nome, login_cpf, cursos_faltantes)
+                    usuario_resumo["cursos_atribuidos_execucao"] = cursos_faltantes
+                    if env_bool("SEND_EXISTING_USER_EMAIL", True):
+                        envia_email_usuario_existente(nome, email, cursos_faltantes)
                 else:
                     logger.info(f"Todos cursos já atribuídos a {nome} ({login_cpf})")
 
@@ -242,6 +270,7 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 logger.info(f"Usuário {nome} ({login_cpf}) criado com sucesso")
                 cursos_faltantes = lista_cursos
                 insere_cursos(nav, espera, nome, login_cpf, cursos_faltantes)
+                usuario_resumo["cursos_atribuidos_execucao"] = cursos_faltantes
 
                 # Envia email com informativo
                 envia_email(nome, email, login_cpf, senha_padrao)
@@ -254,10 +283,14 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 logger.info("Planilha atualizada")
             except Exception as e:
                 logger.error(f"Erro ao salvar planilha: {e}")
+                raise
             logger.info("Processo de cadastro finalizado com sucesso")
+            resumo["ok"].append(usuario_resumo)
 
         except Exception as e:
             logger.error(f"Erro ao processar o usuário {nome} ({login_cpf}): {e}", exc_info=True)
+            usuario_resumo["erro"] = str(e)
+            resumo["n_ok"].append(usuario_resumo)
             # Atualiza planilha
             df.at[usuario.name, "Status"] = "N Ok"
             try:
@@ -265,3 +298,5 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
                 logger.info("Planilha atualizada")
             except Exception as e:
                 logger.error(f"Erro ao salvar planilha: {e}")
+
+    return resumo
