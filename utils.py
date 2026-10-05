@@ -1,12 +1,14 @@
 import logging
 import os, sys
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urlparse
 from dotenv import load_dotenv
 
 load_dotenv()
 
 LOG_FILE_PATH = None
+ERROR_SCREENSHOTS = []
 
 def is_url(value):
     parsed = urlparse(value)
@@ -90,3 +92,32 @@ def get_logger():
 
 def get_log_file_path():
     return LOG_FILE_PATH
+
+def salvar_screenshot_erro(nav, contexto):
+    if (os.getenv("ERROR_SCREENSHOT_ENABLED", "true") or "").strip().lower() not in ("1", "true", "sim", "s", "yes", "y"):
+        return None
+
+    if nav is None:
+        return None
+
+    try:
+        base_dir = Path(__file__).resolve().parent
+        screenshots_dir = base_dir / "logs" / "screenshots"
+        screenshots_dir.mkdir(parents=True, exist_ok=True)
+
+        timestamp = datetime.now().strftime("%d-%m-%Y_%H-%M-%S")
+        contexto_seguro = "".join(
+            caractere if caractere.isalnum() or caractere in ("-", "_") else "_"
+            for caractere in str(contexto)
+        ).strip("_") or "erro"
+        caminho = screenshots_dir / f"{timestamp}_{contexto_seguro}.png"
+
+        nav.save_screenshot(str(caminho))
+        ERROR_SCREENSHOTS.append(str(caminho))
+        return str(caminho)
+    except Exception as e:
+        get_logger().warning(f"Erro ao salvar screenshot: {e}", exc_info=True)
+        return None
+
+def get_error_screenshots():
+    return list(ERROR_SCREENSHOTS)

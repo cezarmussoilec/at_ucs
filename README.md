@@ -101,6 +101,7 @@ ALERT_EMAIL_TO=
 ALERT_EMAIL_FROM=
 ALERT_ON_SUCCESS=true
 ALERT_ON_ERROR=true
+ERROR_SCREENSHOT_ENABLED=true
 ```
 
 ### Variáveis principais
@@ -121,6 +122,7 @@ ALERT_ON_ERROR=true
 | `ALERT_EMAIL_FROM` | Não | Remetente dos alertas. Se vazio, usa `OUTLOOK_FROM`. |
 | `ALERT_ON_SUCCESS` | Não | Envia resumo ao final da execução. |
 | `ALERT_ON_ERROR` | Não | Envia alerta quando ocorre erro fatal. |
+| `ERROR_SCREENSHOT_ENABLED` | Não | Salva e anexa screenshots da tela quando ocorre erro no navegador. |
 
 ## Origem dos dados
 
@@ -263,6 +265,7 @@ ALERT_EMAIL_TO=responsavel@empresa.com
 ALERT_EMAIL_FROM=
 ALERT_ON_SUCCESS=true
 ALERT_ON_ERROR=true
+ERROR_SCREENSHOT_ENABLED=true
 ```
 
 O alerta de sucesso contém:
@@ -278,6 +281,8 @@ O alerta de sucesso contém:
 - erro por usuário, quando houver.
 
 Use `ALERT_ON_SUCCESS=false` para desativar o resumo de execuções concluídas. Use `ALERT_ON_ERROR=false` para desativar alertas de erro fatal.
+
+Quando `ERROR_SCREENSHOT_ENABLED=true`, erros ocorridos com o navegador salvam screenshots em `logs/screenshots/` e esses arquivos são anexados ao e-mail de alerta.
 
 ## Estrutura do projeto
 

@@ -4,7 +4,7 @@ import traceback
 import win32com.client as client
 
 from informativo import configurar_remetente, resolver_destinatarios
-from utils import get_logger, get_log_file_path
+from utils import get_logger, get_log_file_path, get_error_screenshots
 
 logger = get_logger()
 
@@ -47,6 +47,8 @@ def resumo_linhas(usuarios, limite=10):
         )
         if usuario.get("erro"):
             linha += f"\n  Erro: {usuario.get('erro')}"
+        if usuario.get("screenshot"):
+            linha += f"\n  Screenshot: {usuario.get('screenshot')}"
         linhas.append(linha)
 
     restantes = len(usuarios) - limite
@@ -56,7 +58,19 @@ def resumo_linhas(usuarios, limite=10):
     return "\n".join(linhas)
 
 
-def enviar_email_alerta(assunto, corpo):
+def screenshots_do_resumo(resumo):
+    caminhos = []
+    for chave in ("ok", "n_ok"):
+        for usuario in resumo.get(chave, []):
+            screenshot = usuario.get("screenshot")
+            if screenshot:
+                caminhos.append(screenshot)
+
+    caminhos.extend(get_error_screenshots())
+    return list(dict.fromkeys(caminhos))
+
+
+def enviar_email_alerta(assunto, corpo, anexos_extras=None):
     destinatarios = destinatarios_alerta()
     if not destinatarios:
         logger.info("ALERT_EMAIL_TO não configurado; alerta por e-mail ignorado.")
@@ -73,6 +87,10 @@ def enviar_email_alerta(assunto, corpo):
     log_path = get_log_file_path()
     if log_path and os.path.exists(log_path):
         message.Attachments.Add(log_path)
+
+    for anexo in anexos_extras or []:
+        if anexo and os.path.exists(anexo):
+            message.Attachments.Add(anexo)
 
     resolver_destinatarios(message)
     message.Send()
@@ -107,7 +125,7 @@ Usuários com sucesso:
 Usuários com erro:
 {resumo_linhas(resumo.get("n_ok", []))}
 """
-    enviar_email_alerta(assunto, corpo)
+    enviar_email_alerta(assunto, corpo, anexos_extras=screenshots_do_resumo(resumo))
 
 
 def enviar_alerta_erro(erro):
@@ -126,4 +144,4 @@ Traceback:
 
 Log: {log_path}
 """
-    enviar_email_alerta(assunto, corpo)
+    enviar_email_alerta(assunto, corpo, anexos_extras=get_error_screenshots())

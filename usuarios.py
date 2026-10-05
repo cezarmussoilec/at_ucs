@@ -6,7 +6,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as ec
 from cursos import insere_cursos
-from utils import formatar_nome, get_logger
+from utils import formatar_nome, get_logger, salvar_screenshot_erro
 from informativo import envia_email, envia_email_usuario_existente
 from dados import salva_planilha
 
@@ -289,6 +289,10 @@ def cadastro(nav, espera, df, usuarios_pendentes, senha_padrao, caminho):
 
         except Exception as e:
             logger.error(f"Erro ao processar o usuário {nome} ({login_cpf}): {e}", exc_info=True)
+            screenshot_path = salvar_screenshot_erro(nav, f"usuario_{login_cpf}")
+            if screenshot_path:
+                usuario_resumo["screenshot"] = screenshot_path
+                logger.info(f"Screenshot do erro salvo em: {screenshot_path}")
             usuario_resumo["erro"] = str(e)
             resumo["n_ok"].append(usuario_resumo)
             # Atualiza planilha
